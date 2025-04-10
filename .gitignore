@@ -1,0 +1,20 @@
+# VSCode
+.vscode
+*.code-workspace
+
+# PlatformIO
+.pioenvs
+.piolibdeps
+.clang_complete
+.gcc-flags.json
+.pio
+
+# Latex
+*.aux
+*.txt
+*.gz
+*.log
+*.out
+
+# Misc
+*.html
