@@ -24,8 +24,7 @@ void setup() {
 
     // Handshake with MATLAB
     Serial.println(F("%Arduino Ready"));
-    while (Serial.read() != 'g')
-        ;  // spin
+    while (Serial.read() != 'g');  // spin
 
     MsTimer2::set(core::TSAMP_MSEC, core::ISR_Sample);  // Set sample msec, ISR name
     MsTimer2::start();                                  // start running the Timer
@@ -43,12 +42,13 @@ void loop() {
     float readValue, floatOutput;  //  Input data from ADC after dither averaging or from MATLAB
     long fxdInputValue, lpfInput, lpfOutput;
     long eqOutput;  //  Equalizer output
+    long noiseOutput; // FIR Windowed Sinc Output
     int alarmCode;  //  Alarm code
 
     // ******************************************************************
     //  When finding the impulse responses of the filters use this as an input
     //  Create a Delta function in time with the first sample a 1 and all others 0
-    core::xv = (core::loopTick == 0) ? 1.0 : 0.0;  // impulse test input
+    // core::xv = (core::loopTick == 0) ? 1.0 : 0.0;  // impulse test input
 
     // ******************************************************************
     //  Use this when the test vector generator is used as an input
@@ -67,16 +67,16 @@ void loop() {
     //  (use DATA_FXPT).  Then round the value and truncate to a fixed point
     //  INT datatype
 
-    // fxdInputValue = long(DATA_FXPT * readValue + 0.5);
+    fxdInputValue = long(core::DATA_FXPT * readValue + 0.5);
 
     //  Execute the equalizer
-    //  eqOutput = EqualizerFIR( fxdInputValue, loopTick );
+    eqOutput = fir::EqualizerFIR( fxdInputValue, core::loopTick );
 
     //  Execute the noise filter.
-    // eqOutput = NoiseFilter( eqOutput, loopTick );
+    noiseOutput = fir::NoiseFilter( eqOutput, core::loopTick );
 
     //  Convert the output of the equalizer by scaling floating point
-    // xv = float(eqOutput) * INV_FXPT;
+    core::xv = float(eqOutput) * core::INV_FXPT;
 
     //*******************************************************************
     // Uncomment this when measuring execution times
@@ -84,7 +84,7 @@ void loop() {
 
     // ******************************************************************
     //  Compute the output of the filter using the cascaded SOS sections
-    core::yv = iir::IIR_LPF(core::xv);  // second order systems cascade
+    // core::yv = iir::IIR_LPF(core::xv);  // second order systems cascade
 
     //  Compute the output of the filter using the cascaded SOS sections
     core::yLF = iir::IIR_LPF(core::xv);  // second order systems cascade
@@ -135,7 +135,9 @@ void loop() {
     //  the array.
 
     core::printArray[0] = core::loopTick;  //  The sample number -- always print this
-    core::printArray[1] = core::xv;        //  Column 2
+    core::printArray[1] = eqOutput;
+    core::printArray[2] = noiseOutput;
+    core::printArray[3] = core::xv;
 
     //   core::printArray[2] = core::yLF;       //  Column 3
     //   core::printArray[3] = core::yMF;       //  Column 4, etc...
@@ -145,15 +147,14 @@ void loop() {
     //   core::printArray[7] = core::stdHF;
     //   core::printArray[8] = core::float(alarmCode);
 
-    core::numValues = 2;  // The number of columns to be sent to the serial monitor (or MATLAB)
+    core::numValues = 4;  // The number of columns to be sent to the serial monitor (or MATLAB)
 
     core::WriteToSerial(core::numValues, core::printArray);  //  Write to the serial monitor (or MATLAB)
 
     if (core::loopTick++ >= core::NUM_SAMPLES) {
         // Serial.print("Average execution time (uSec) = ");Serial.println(
         // float(execUsec)/NUM_SAMPLES );
-        while (true)
-            ;  // spin forever
+        while (true) {};  // spin forever
     }
 
 }  // loop()

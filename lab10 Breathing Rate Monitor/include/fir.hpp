@@ -10,23 +10,23 @@ long EqualizerFIR(long xInput, int sampleNumber)
 
     for (i = equalizerLength - 1; i >= 1; i--)
     {
-    xN[i] = xN[i - 1];
+        xN[i] = xN[i - 1];
     }
 
     xN[0] = xInput;
 
     for ( i = 0; i <= equalizerLength - 1; i++)
     {
-    yN += h[i] * xN[i];
+        yN += h[i] * xN[i];
     }
 
     if (sampleNumber < equalizerLength)
     {
-    return 0;
+        return 0;
     }
     else
     {
-    return yN;
+        return yN;
     }
 }
 
@@ -52,17 +52,17 @@ int NoiseFilter(long xInput, int sampleNumber) {
     // h[]*x[] overlap multiply-accumumlate
     for (int i = 0; i < MFILT; i++)
     {
-    hv = h[i]; // create 32 bit space
-    accum += hv*xN[MFILT-1-i];
+        hv = h[i]; // create 32 bit space
+        accum += hv*xN[MFILT-1-i];
     }
 
     if (sampleNumber < MFILT )
     {
-    return long(0);
+        return long(0);
     }
     else
     {
-    return long(float(accum) * INV_HFXPT);
+        return long(float(accum) * INV_HFXPT);
     }
 }
 
