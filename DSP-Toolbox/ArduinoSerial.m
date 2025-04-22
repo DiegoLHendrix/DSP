@@ -27,6 +27,7 @@ classdef ArduinoSerial < handle
         
         arduinoPort = [];
         portTimeOut = [];
+        portOpen = [];
         
     end
     
@@ -64,6 +65,7 @@ classdef ArduinoSerial < handle
             obj.baudRate = inputArgs.BaudRate;
             obj.readyString = inputArgs.ReadyString;
             obj.portTimeOut = inputArgs.PortTimeOut;
+            obj.portOpen = false;
             
         end
         
@@ -73,31 +75,48 @@ classdef ArduinoSerial < handle
             %
             
             %  Close all existing COM ports
-            if ~isempty(instrfind)
-                fclose(instrfind);
+
+            foundPorts = serialportfind;
+
+            if ~isempty(foundPorts)
+                delete(foundPorts);
             end
+
+            returnValue = true;
             
             if ischar( obj.comPort )
-                obj.arduinoPort = serial(sprintf('%s',obj.comPort),...
-                    'BaudRate',obj.baudRate);
+                try
+                obj.arduinoPort = serialport(sprintf('%s',obj.comPort),...
+                    obj.baudRate);
+                obj.portOpen = true;
+                catch
+                    returnValue = false;
+                end
             else
-                obj.arduinoPort = serial(sprintf('com%1d',obj.comPort),...
-                    'BaudRate',obj.baudRate);
+                try
+                    obj.arduinoPort = serialport(sprintf('com%1d',obj.comPort),...
+                        obj.baudRate);
+                    obj.portOpen = true;
+                catch
+                    returnValue = false;
+                end
             end
-            
-            fopen(obj.arduinoPort);
-            
-            returnValue = true;
-            %  If the port didn't open correctly returnValue will be -1
-            
+
         end
         
         %  method ClosePort
         function returnValue = ClosePort(obj)
-            %  CloseSerial
+            %  ClosePort
             %
-            %  Close the arduino serial port
-            fclose( obj.arduinoPort );
+            %  Closes the arduino serial port by deleting the serialport
+            %  object
+            returnValue = true;
+            try
+                delete( obj.arduinoPort );
+                obj.portOpen = false;
+            catch
+                returnValue = false;
+            end
         end % ClosePort
         
         
@@ -113,7 +132,7 @@ classdef ArduinoSerial < handle
             while ~readyFlag
                 
                 %  Idle while waiting for data in the buffer
-                while ~obj.arduinoPort.BytesAvailable
+                while ~obj.arduinoPort.NumBytesAvailable
                 end
                 rxString = obj.ReadArduino;
                 
@@ -145,7 +164,15 @@ classdef ArduinoSerial < handle
             %  WriteString
             %
             %  Sends the string argument over the arduino serial port
-            fprintf(obj.arduinoPort, '%s\n',strValue);
+            % fprintf(obj.arduinoPort, '%s\n',strValue);
+            
+            %  In previous versions prior to 2024b the terminating
+            %  character was not sent, but it is withe 2024b so don't send
+            %  it again
+            % writeline(obj.arduinoPort, sprintf('%s\n',strValue));
+
+            %  For Version 24.2 Release R2024b and later
+            writeline(obj.arduinoPort, sprintf('%s',strValue));
             
         end %  WriteString
         
@@ -153,7 +180,7 @@ classdef ArduinoSerial < handle
         function WriteNumeric( obj, numValue )
             %  WriteNumeric
             %
-            %  WriteNumeric first convers numeric argument to a string then
+            %  WriteNumeric first converts numeric argument to a string then
             %  calls the WriteString method to send the string to the
             %  Arduino serial port
             
@@ -173,7 +200,9 @@ classdef ArduinoSerial < handle
             %
             %  ReadArdino reads a string value from the Arduino serial port
             %  object
-            readString = fgetl( obj.arduinoPort );
+            % readString = fgetl( obj.arduinoPort );
+
+            readString = readline(obj.arduinoPort);
             
         end
         
@@ -189,7 +218,7 @@ classdef ArduinoSerial < handle
             %  Start the timer
             dataAvailable = true;
             tic
-            while ~obj.arduinoPort.BytesAvailable
+            while ~obj.arduinoPort.NumBytesAvailable
                 if toc > obj.portTimeOut
                     dataAvailable = false;
                     break

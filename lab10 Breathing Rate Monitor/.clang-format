@@ -67,3 +67,6 @@ UseTab: Never
 
 PenaltyBreakComment: 1000 # Discourages breaking long comments
 PenaltyBreakBeforeFirstCallParameter: 100 # Avoid breaking function calls too soon
+
+AllowShortLoopsOnASingleLine: true
+AllowShortBlocksOnASingleLine: true
