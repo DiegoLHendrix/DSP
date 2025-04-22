@@ -85,10 +85,10 @@ void loop()
   fxdInputValue = long(DATA_FXPT * readValue + 0.5);
 
   //  Execute the equalizer
-  eqOutput = EqualizerFIR( fxdInputValue );
+  eqOutput = EqualizerFIR( fxdInputValue, loopTick );
   
   //  Execute the noise filter.  
-  noiseOutput = NoiseFilter( eqOutput );
+  noiseOutput = NoiseFilter( eqOutput, loopTick );
 
   //  Convert the output of the equalizer by scaling floating point
   xv = float(noiseOutput) * INV_FXPT;
@@ -160,7 +160,7 @@ int AlarmCheck( float stdLF, float stdMF, float stdHF)
 }  // end AlarmCheck
 
 //**********************************************************************
-long EqualizerFIR(long xInput)
+long EqualizerFIR(long xInput, int sampleNumber)
 {
   int i;
   long yN = 0; //  Current output
@@ -180,7 +180,7 @@ long EqualizerFIR(long xInput)
     yN += h[i] * xN[i];
   }
 
-  if (loopTick < equalizerLength)
+  if (sampleNumber < equalizerLength)
   {
     return 0;
   }
@@ -191,7 +191,7 @@ long EqualizerFIR(long xInput)
 }
 
 //*******************************************************************
-int NoiseFilter(long inputX) {
+int NoiseFilter(long inputX, int sampleNumber) {
   // Filter Type: LPF
   const int Fc_bpm = 65;
 	// LPF FIR Filter Coefficients MFILT = 61, Fc = 50
@@ -207,15 +207,23 @@ int NoiseFilter(long inputX) {
   long hv, accum = 0;
 
   // Right shift old xv values. Install new x in xv[0];
-  for (int i = (MFILT-1); i > 0; i--) xv[i] = xv[i-1]; xv[0] = x;
+  for (int i = (MFILT-1); i > 0; i--) xN[i] = xN[i-1]; xN[0] = inputX;
 
   // h[]*x[] overlap multiply-accumumlate
   for (int i = 0; i < MFILT; i++)
   {
     hv = h[i]; // create 32 bit space
-    accum += hv*xv[MFILT-1-i];
+    accum += hv*xN[MFILT-1-i];
   }
-  return (accum*INV_HFXPT);
+
+  if (sampleNumber < MFILT )
+  {
+    return long(0);
+  }
+  else
+  {
+    return long(float(accum) * INV_HFXPT);
+  }
 }
 
 //**********************************************************************
@@ -486,7 +494,7 @@ float ReadFromMATLAB()
     }
     inputString[charCount] = 0;
     return atof(inputString);
-
+  }
 }  // end ReadFromMATLAB
 
 //**********************************************************************
