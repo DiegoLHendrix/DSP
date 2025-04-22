@@ -12,12 +12,12 @@ const int NUM_SAMPLES = 3600;
 const int NUM_SUBSAMPLES = 160;
 const int DAC0 = 3, DAC1 = 4, DAC2 = 5, LM61 = A0, VDITH = A1;
 const int V_REF = 5.0;
-const int SPKR = 12; // d12  PB4
+const int SPKR = 12;  // d12  PB4
 
 volatile boolean sampleFlag = false;
 
-const long DATA_FXPT = 1000; // Scale value to convert from float to fixed
-const float INV_FXPT = 1.0 / DATA_FXPT; // division slow: precalculate
+const long DATA_FXPT = 1000;             // Scale value to convert from float to fixed
+const float INV_FXPT = 1.0 / DATA_FXPT;  // division slow: precalculate
 
 int nSmpl = 1, sample;
 
@@ -121,8 +121,8 @@ void loop()
   //  Call the alarm check function to determine what breathing range 
   // alarmCode = AlarmCheck( stdLF, stdMF, stdHF );
 
-  //  Call the alarm function to turn on or off the tone
-  // setAlarm(alarmCode, isToneEn );
+    //  Call the alarm function to turn on or off the tone
+    // setAlarm(alarmCode, isToneEn );
 
   printArray[0] = loopTick;  //  Sample Number
   printArray[1] = xv;        //  Input Data
@@ -145,7 +145,7 @@ void loop()
     while(true); // spin forever
   }
 
-} // loop()
+}  // loop()
 
 //**********************************************************************
 int AlarmCheck( float stdLF, float stdMF, float stdHF)
@@ -377,7 +377,7 @@ void setAlarm(int aCode, boolean isToneEn)
 
 // Your alarm code goes here
 
-} // setBreathRateAlarm()
+}  // setBreathRateAlarm()
 
 //**********************************************************************
 float testVector(void)
@@ -454,8 +454,8 @@ void WriteToSerial( int numValues, float dataArray[] )
       Serial.print(dataArray[index], DEC);
   }
 
-  Serial.print('\n');
-  delay(20);
+    Serial.print('\n');
+    delay(20);
 
 }  // end WriteToMATLAB
 
@@ -484,11 +484,10 @@ float ReadFromMATLAB()
     {
       inputString[charCount++] = inChar;
     }
-  }
-  inputString[charCount] = 0;
-  return atof(inputString);
+    inputString[charCount] = 0;
+    return atof(inputString);
 
-} // end ReadFromMATLAB
+}  // end ReadFromMATLAB
 
 //**********************************************************************
 void syncSample(void)
