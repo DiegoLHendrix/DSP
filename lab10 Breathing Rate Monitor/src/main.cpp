@@ -40,7 +40,7 @@ void loop() {
     // Declare variables
 
     float readValue, floatOutput;  //  Input data from ADC after dither averaging or from MATLAB
-    long fxdInputValue, lpfInput, lpfOutput;
+    long fxdInputValue;
     long eqOutput;  //  Equalizer output
     long noiseOutput; // FIR Windowed Sinc Output
     int alarmCode;  //  Alarm code
@@ -48,11 +48,11 @@ void loop() {
     // ******************************************************************
     //  When finding the impulse responses of the filters use this as an input
     //  Create a Delta function in time with the first sample a 1 and all others 0
-    // core::xv = (core::loopTick == 0) ? 1.0 : 0.0;  // impulse test input
+    //  core::xv = (core::loopTick == 0) ? 1.0 : 0.0;  // impulse test input
 
     // ******************************************************************
     //  Use this when the test vector generator is used as an input
-    //  xv = testVector();
+    //  core::xv = testVector();
 
     // ******************************************************************
     //  Read input value in ADC counts  -- Get simulated data from MATLAB
@@ -80,14 +80,11 @@ void loop() {
 
     //*******************************************************************
     // Uncomment this when measuring execution times
-    core::startUsec = micros();
+    // core::startUsec = micros();
 
     // ******************************************************************
     //  Compute the output of the filter using the cascaded SOS sections
-    // core::yv = iir::IIR_LPF(core::xv);  // second order systems cascade
-
-    //  Compute the output of the filter using the cascaded SOS sections
-    core::yLF = iir::IIR_LPF(core::xv);  // second order systems cascade
+    core::yLF = iir::IIR_LPF(core::xv);
     core::yMF = iir::IIR_BPF(core::xv);
     core::yHF = iir::IIR_HPF(core::xv);
 
@@ -106,24 +103,16 @@ void loop() {
     core::getStats(core::yHF, core::statsHF, core::statsReset);
     core::stdHF = core::statsHF.stdev;
 
-    //  Compute the latest output of the running stats for the output of the
-    //  filters. Pass the entire set of output values, the latest stats structure
-    //  and the reset flag
-
-    //  statsReset = (statsLF.tick%100 == 0);
-    //  getStats( yv, statsLF, statsReset);
-    //  stdLF = statsLF.stdev;
-
     //*******************************************************************
     // Uncomment this when measuring execution times
     // endUsec = micros();
     // execUsec = execUsec + (endUsec-startUsec);
 
     //  Call the alarm check function to determine what breathing range
-    //  alarmCode = AlarmCheck( stdLF, stdMF, stdHF );
+    alarmCode = core::AlarmCheck( core::stdLF, core::stdMF, core::stdHF );
 
     //  Call the alarm function to turn on or off the tone
-    // setAlarm(alarmCode, isToneEn );
+    core::setAlarm( alarmCode, core::isToneEn );
 
     // To print data to the serial port, use the WriteToSerial function.
     //

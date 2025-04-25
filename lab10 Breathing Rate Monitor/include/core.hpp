@@ -34,11 +34,16 @@ struct stats_t {
 
 //******************************************************************
 int AlarmCheck(float stdLF, float stdMF, float stdHF) {
+    if (stdLF < 0.05 && stdMF < 0.05 && stdHF < 0.05)
+        return 0;
 
-    //  Your alarm check logic code will go here.
+    if (stdHF > 0.30 && stdHF > stdMF && stdHF > stdLF)
+        return 3;
 
-    // return alarmCode;
+    if (stdLF > 0.30 && stdLF > stdMF && stdLF > stdHF)
+        return 1;
 
+    return 2;
 }  // end AlarmCheck
 
 //*******************************************************************
@@ -63,12 +68,10 @@ void getStats(float xv, stats_t& s, bool reset) {
 float analogReadDitherAve(void) {
 
     float sum = 0.0;
-    int index;
     for (int i = 0; i < NUM_SUBSAMPLES; i++) {
-        index = i;
-        digitalWrite(DAC0, (index & B00000001));  // LSB bit mask
-        digitalWrite(DAC1, (index & B00000010));
-        digitalWrite(DAC2, (index & B00000100));  // MSB bit mask
+        digitalWrite(DAC0, (i & B00000001));  // LSB bit mask
+        digitalWrite(DAC1, (i & B00000010));
+        digitalWrite(DAC2, (i & B00000100));  // MSB bit mask
         sum += analogRead(LM61);
     }
     return sum / NUM_SUBSAMPLES;  // averaged subsamples
@@ -77,7 +80,42 @@ float analogReadDitherAve(void) {
 //*********************************************************************
 void setAlarm(int aCode, boolean isToneEn) {
 
-    // Your alarm code goes here
+    if (!isToneEn) { noTone(SPKR); return; }
+
+    static unsigned long lastToggle = 0;
+    static bool highOn = false;
+
+    switch (aCode)
+    {
+        case 0:
+            tone(SPKR, 200);
+            break;
+
+        case 1:
+            tone(SPKR, 400);
+            break;
+
+        case 2:
+            noTone(SPKR);
+            highOn = false;
+            break;
+
+        case 3:
+        {
+            unsigned long now = millis();
+            if (now - lastToggle >= 1000)
+            {
+                lastToggle = now;
+                highOn = !highOn;
+                if (highOn) tone(SPKR, 1000);
+                else noTone(SPKR);
+            }
+            break;
+        }
+
+        default:
+            noTone(SPKR);
+            break;
 
 }  // setBreathRateAlarm()
 
@@ -194,8 +232,5 @@ void syncSample(void) {
 
 //**********************************************************************
 void ISR_Sample() { sampleFlag = true; }
-
-//**********************************************************************
-void comparator(float hpf, float lpf, float bpf) {}
 
 }  // namespace core
