@@ -32,7 +32,7 @@ void setup() {
 
 ////**********************************************************************
 void loop() {
-
+    // core::setAlarm(1, true);
     // syncSample();  // Wait for the interupt when actually reading ADC data
 
     // Breathing Rate Detection
@@ -40,7 +40,7 @@ void loop() {
     // Declare variables
 
     float readValue, floatOutput;  //  Input data from ADC after dither averaging or from MATLAB
-    long fxdInputValue, lpfInput, lpfOutput;
+    long fxdInputValue;
     long eqOutput;  //  Equalizer output
     long noiseOutput; // FIR Windowed Sinc Output
     int alarmCode;  //  Alarm code
@@ -48,15 +48,15 @@ void loop() {
     // ******************************************************************
     //  When finding the impulse responses of the filters use this as an input
     //  Create a Delta function in time with the first sample a 1 and all others 0
-    // core::xv = (core::loopTick == 0) ? 1.0 : 0.0;  // impulse test input
+    //  core::xv = (core::loopTick == 0) ? 1.0 : 0.0;  // impulse test input
 
     // ******************************************************************
     //  Use this when the test vector generator is used as an input
-    //  xv = testVector();
+    //  core::xv = testVector();
 
     // ******************************************************************
     //  Read input value in ADC counts  -- Get simulated data from MATLAB
-    // readValue = ReadFromMATLAB();
+    // readValue = core::ReadFromMATLAB();
 
     // ******************************************************************
     //  Read input value from ADC using Dithering, and averaging
@@ -73,22 +73,19 @@ void loop() {
     eqOutput = fir::EqualizerFIR( fxdInputValue, core::loopTick );
 
     //  Execute the noise filter.
-    noiseOutput = fir::NoiseFilter( eqOutput, core::loopTick );
+    eqOutput = fir::NoiseFilter( eqOutput, core::loopTick );
 
     //  Convert the output of the equalizer by scaling floating point
     core::xv = float(eqOutput) * core::INV_FXPT;
-
+   
     //*******************************************************************
     // Uncomment this when measuring execution times
-    core::startUsec = micros();
+    // core::startUsec = micros();
 
     // ******************************************************************
     //  Compute the output of the filter using the cascaded SOS sections
-    // core::yv = iir::IIR_LPF(core::xv);  // second order systems cascade
-
-    //  Compute the output of the filter using the cascaded SOS sections
-    core::yLF = iir::IIR_LPF(core::xv);  // second order systems cascade
-    core::yMF = iir::IIR_BPF(core::xv);
+    core::yLF = iir::IIR_LPF(core::xv);
+    core::yBF = iir::IIR_BPF(core::xv);
     core::yHF = iir::IIR_HPF(core::xv);
 
     //  Compute the latest output of the running stats for the output of the
@@ -99,20 +96,12 @@ void loop() {
     core::stdLF = core::statsLF.stdev;
 
     core::statsReset = ((core::statsMF.tick % 100) == 0);
-    core::getStats(core::yMF, core::statsMF, core::statsReset);
-    core::stdMF = core::statsMF.stdev;
+    core::getStats(core::yBF, core::statsMF, core::statsReset);
+    core::stdBF = core::statsMF.stdev;
 
     core::statsReset = ((core::statsHF.tick % 100) == 0);
     core::getStats(core::yHF, core::statsHF, core::statsReset);
     core::stdHF = core::statsHF.stdev;
-
-    //  Compute the latest output of the running stats for the output of the
-    //  filters. Pass the entire set of output values, the latest stats structure
-    //  and the reset flag
-
-    //  statsReset = (statsLF.tick%100 == 0);
-    //  getStats( yv, statsLF, statsReset);
-    //  stdLF = statsLF.stdev;
 
     //*******************************************************************
     // Uncomment this when measuring execution times
@@ -120,10 +109,13 @@ void loop() {
     // execUsec = execUsec + (endUsec-startUsec);
 
     //  Call the alarm check function to determine what breathing range
-    //  alarmCode = AlarmCheck( stdLF, stdMF, stdHF );
+    alarmCode = core::AlarmCheck( core::stdLF, core::stdBF, core::stdHF );
+
+    if (alarmCode > 0) core::isToneEn = true;
+    else core::isToneEn = false;
 
     //  Call the alarm function to turn on or off the tone
-    // setAlarm(alarmCode, isToneEn );
+    core::setAlarm( alarmCode, core::isToneEn );
 
     // To print data to the serial port, use the WriteToSerial function.
     //
@@ -135,19 +127,19 @@ void loop() {
     //  the array.
 
     core::printArray[0] = core::loopTick;  //  The sample number -- always print this
-    core::printArray[1] = eqOutput;
-    core::printArray[2] = noiseOutput;
-    core::printArray[3] = core::xv;
+    // core::printArray[1] = eqOutput;
+    // core::printArray[2] = noiseOutput;
+    core::printArray[1] = core::xv;
 
-    //   core::printArray[2] = core::yLF;       //  Column 3
-    //   core::printArray[3] = core::yMF;       //  Column 4, etc...
-    //   core::printArray[4] = core::yHF;
-    //   core::printArray[5] = core::stdLF;
-    //   core::printArray[6] = core::stdMF;
-    //   core::printArray[7] = core::stdHF;
-    //   core::printArray[8] = core::float(alarmCode);
+    core::printArray[2] = core::yLF;       //  Column 3
+    core::printArray[3] = core::yBF;       //  Column 4, etc...
+    core::printArray[4] = core::yHF;
+    core::printArray[5] = core::stdLF;
+    core::printArray[6] = core::stdBF;
+    core::printArray[7] = core::stdHF;
+    core::printArray[8] = float(alarmCode);
 
-    core::numValues = 4;  // The number of columns to be sent to the serial monitor (or MATLAB)
+    core::numValues = 9;  // The number of columns to be sent to the serial monitor (or MATLAB)
 
     core::WriteToSerial(core::numValues, core::printArray);  //  Write to the serial monitor (or MATLAB)
 

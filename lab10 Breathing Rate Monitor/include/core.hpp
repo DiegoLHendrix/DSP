@@ -3,7 +3,7 @@
 namespace core {
 
 const int TSAMP_MSEC = 100;
-const int NUM_SAMPLES = 900;  // 3600;
+const int NUM_SAMPLES = 3600;
 const int NUM_SUBSAMPLES = 160;
 const int DAC0 = 3, DAC1 = 4, DAC2 = 5, LM61 = A0, VDITH = A1;
 const int V_REF = 5.0;
@@ -16,7 +16,7 @@ const float INV_FXPT = 1.0 / DATA_FXPT;  // division slow: precalculate
 
 int nSmpl = 1, sample;
 
-float xv, yv, yLF, yMF, yHF, stdLF, stdMF, stdHF;
+float xv, yv, yLF, yBF, yHF, stdLF, stdBF, stdHF;
 float printArray[9];
 int numValues = 0;
 
@@ -33,12 +33,17 @@ struct stats_t {
 } statsLF, statsMF, statsHF;
 
 //******************************************************************
-int AlarmCheck(float stdLF, float stdMF, float stdHF) {
+int AlarmCheck(float stdLF, float stdBF, float stdHF) {
+    if (stdLF < 0.001 && stdBF < 0.001 && stdHF < 0.001)
+        return 1; // Disconnect
 
-    //  Your alarm check logic code will go here.
+    if (stdLF > stdBF && stdLF > stdHF)
+        return 2; // LPF
 
-    // return alarmCode;
+    if (stdHF > stdBF && stdHF > stdLF)
+        return 3; // HPF
 
+    return 0; // Normal (BPF)
 }  // end AlarmCheck
 
 //*******************************************************************
@@ -63,12 +68,10 @@ void getStats(float xv, stats_t& s, bool reset) {
 float analogReadDitherAve(void) {
 
     float sum = 0.0;
-    int index;
     for (int i = 0; i < NUM_SUBSAMPLES; i++) {
-        index = i;
-        digitalWrite(DAC0, (index & B00000001));  // LSB bit mask
-        digitalWrite(DAC1, (index & B00000010));
-        digitalWrite(DAC2, (index & B00000100));  // MSB bit mask
+        digitalWrite(DAC0, (i & B00000001));  // LSB bit mask
+        digitalWrite(DAC1, (i & B00000010));
+        digitalWrite(DAC2, (i & B00000100));  // MSB bit mask
         sum += analogRead(LM61);
     }
     return sum / NUM_SUBSAMPLES;  // averaged subsamples
@@ -77,8 +80,39 @@ float analogReadDitherAve(void) {
 //*********************************************************************
 void setAlarm(int aCode, boolean isToneEn) {
 
-    // Your alarm code goes here
+    if (!isToneEn) { noTone(SPKR); return; }
 
+    static unsigned long lastToggle = 0;
+    static bool highOn = false;
+
+    switch (aCode)
+    {
+        case 1: // Disconnected
+            tone(SPKR, 200);
+            break;
+
+        case 2: // LPF
+            tone(SPKR, 400);
+            break;
+
+        case 3: // HPF
+        {
+            unsigned long now = millis();
+            if (now - lastToggle >= 1000)
+            {
+                lastToggle = now;
+                highOn = !highOn;
+                if (highOn) tone(SPKR, 1000);
+                else noTone(SPKR);
+            }
+            break;
+        }
+
+        default: // Normal
+            noTone(SPKR);
+            highOn = false;
+            break;
+    }
 }  // setBreathRateAlarm()
 
 //*************************************************************
@@ -194,8 +228,5 @@ void syncSample(void) {
 
 //**********************************************************************
 void ISR_Sample() { sampleFlag = true; }
-
-//**********************************************************************
-void comparator(float hpf, float lpf, float bpf) {}
 
 }  // namespace core

@@ -21,7 +21,7 @@ const float INV_FXPT = 1.0 / DATA_FXPT;  // division slow: precalculate
 
 int nSmpl = 1, sample;
 
-float xv, yv, yLF, yMF, yHF, stdLF, stdMF, stdHF;
+float xv, yv, yLF, yBF, yHF, stdLF, stdBF, stdHF;
 float printArray[9];
 int numValues = 0;
 
@@ -98,7 +98,7 @@ void loop()
 
   // Filter bank
   yLF = IIR_LPF(xv); // second order systems cascade
-  yMF = IIR_BPF(xv);  
+  yBF = IIR_BPF(xv);  
   yHF = IIR_HPF(xv);
 
   // Determine which filter is active and its standard deviation
@@ -107,8 +107,8 @@ void loop()
   stdLF = statsLF.stdev;
 
   statsReset = ((statsMF.tick % 100) == 0);
-  getStats(yMF, statsMF, statsReset);
-  stdMF = statsMF.stdev;
+  getStats(yBF, statsMF, statsReset);
+  stdBF = statsMF.stdev;
 
   statsReset = ((statsHF.tick % 100) == 0);
   getStats(yHF, statsHF, statsReset);
@@ -119,7 +119,7 @@ void loop()
   execUsec = execUsec + (endUsec-startUsec);
 
   //  Call the alarm check function to determine what breathing range 
-  // alarmCode = AlarmCheck( stdLF, stdMF, stdHF );
+  // alarmCode = AlarmCheck( stdLF, stdBF, stdHF );
 
     //  Call the alarm function to turn on or off the tone
     // setAlarm(alarmCode, isToneEn );
@@ -129,10 +129,10 @@ void loop()
   printArray[2] = eqOutput;       //  Raw Low Pass Filter
   printArray[3] = noiseOutput;       //  Raw Bandpass Filter
   // printArray[2] = yLF;       //  Raw Low Pass Filter
-  // printArray[3] = yMF;       //  Raw Bandpass Filter
+  // printArray[3] = yBF;       //  Raw Bandpass Filter
   // printArray[4] = yHF;       //  Raw High Pass Filter
   // printArray[5] = stdLF;     //  StdDev Low Pass Filter
-  // printArray[6] = stdMF;     //  StdDev Bandpass Filter
+  // printArray[6] = stdBF;     //  StdDev Bandpass Filter
   // printArray[7] = stdHF;     //  StdDev High Pass Filter
   // printArray[8] = float(alarmCode);
 
@@ -148,7 +148,7 @@ void loop()
 }  // loop()
 
 //**********************************************************************
-int AlarmCheck( float stdLF, float stdMF, float stdHF)
+int AlarmCheck( float stdLF, float stdBF, float stdHF)
 {
 
 

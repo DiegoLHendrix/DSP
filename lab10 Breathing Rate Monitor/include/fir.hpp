@@ -55,15 +55,7 @@ int NoiseFilter(long xInput, int sampleNumber) {
         hv = h[i]; // create 32 bit space
         accum += hv*xN[MFILT-1-i];
     }
-
-    if (sampleNumber < MFILT )
-    {
-        return long(0);
-    }
-    else
-    {
-        return long(float(accum) * INV_HFXPT);
-    }
+    return (accum*INV_HFXPT);
 }
 
 }  // namespace fir
