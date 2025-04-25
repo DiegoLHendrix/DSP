@@ -35,15 +35,15 @@ struct stats_t {
 //******************************************************************
 int AlarmCheck(float stdLF, float stdBF, float stdHF) {
     if (stdLF < 0.001 && stdBF < 0.001 && stdHF < 0.001)
-        return 1; // Disconnect
+        return 1;  // Disconnect
 
     if (stdLF > stdBF && stdLF > stdHF)
-        return 2; // LPF
+        return 2;  // LPF
 
     if (stdHF > stdBF && stdHF > stdLF)
-        return 3; // HPF
+        return 3;  // HPF
 
-    return 0; // Normal (BPF)
+    return 0;  // Normal (BPF)
 }  // end AlarmCheck
 
 //*******************************************************************
@@ -80,38 +80,41 @@ float analogReadDitherAve(void) {
 //*********************************************************************
 void setAlarm(int aCode, boolean isToneEn) {
 
-    if (!isToneEn) { noTone(SPKR); return; }
+    if (!isToneEn) {
+        noTone(SPKR);
+        return;
+    }
 
     static unsigned long lastToggle = 0;
     static bool highOn = false;
 
-    switch (aCode)
+    switch (aCode) {
+    case 1:  // Disconnected
+        tone(SPKR, 200);
+        break;
+
+    case 2:  // LPF
+        tone(SPKR, 400);
+        break;
+
+    case 3:  // HPF
     {
-        case 1: // Disconnected
-            tone(SPKR, 200);
-            break;
-
-        case 2: // LPF
-            tone(SPKR, 400);
-            break;
-
-        case 3: // HPF
-        {
-            unsigned long now = millis();
-            if (now - lastToggle >= 1000)
-            {
-                lastToggle = now;
-                highOn = !highOn;
-                if (highOn) tone(SPKR, 1000);
-                else noTone(SPKR);
-            }
-            break;
+        unsigned long now = millis();
+        if (now - lastToggle >= 1000) {
+            lastToggle = now;
+            highOn = !highOn;
+            if (highOn)
+                tone(SPKR, 1000);
+            else
+                noTone(SPKR);
         }
+        break;
+    }
 
-        default: // Normal
-            noTone(SPKR);
-            highOn = false;
-            break;
+    default:  // Normal
+        noTone(SPKR);
+        highOn = false;
+        break;
     }
 }  // setBreathRateAlarm()
 

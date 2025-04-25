@@ -24,7 +24,8 @@ void setup() {
 
     // Handshake with MATLAB
     Serial.println(F("%Arduino Ready"));
-    while (Serial.read() != 'g');  // spin
+    while (Serial.read() != 'g')
+        ;  // spin
 
     MsTimer2::set(core::TSAMP_MSEC, core::ISR_Sample);  // Set sample msec, ISR name
     MsTimer2::start();                                  // start running the Timer
@@ -41,9 +42,9 @@ void loop() {
 
     float readValue, floatOutput;  //  Input data from ADC after dither averaging or from MATLAB
     long fxdInputValue;
-    long eqOutput;  //  Equalizer output
-    long noiseOutput; // FIR Windowed Sinc Output
-    int alarmCode;  //  Alarm code
+    long eqOutput;     //  Equalizer output
+    long noiseOutput;  // FIR Windowed Sinc Output
+    int alarmCode;     //  Alarm code
 
     // ******************************************************************
     //  When finding the impulse responses of the filters use this as an input
@@ -70,14 +71,14 @@ void loop() {
     fxdInputValue = long(core::DATA_FXPT * readValue + 0.5);
 
     //  Execute the equalizer
-    eqOutput = fir::EqualizerFIR( fxdInputValue, core::loopTick );
+    eqOutput = fir::EqualizerFIR(fxdInputValue, core::loopTick);
 
     //  Execute the noise filter.
-    eqOutput = fir::NoiseFilter( eqOutput, core::loopTick );
+    eqOutput = fir::NoiseFilter(eqOutput, core::loopTick);
 
     //  Convert the output of the equalizer by scaling floating point
     core::xv = float(eqOutput) * core::INV_FXPT;
-   
+
     //*******************************************************************
     // Uncomment this when measuring execution times
     // core::startUsec = micros();
@@ -109,13 +110,15 @@ void loop() {
     // execUsec = execUsec + (endUsec-startUsec);
 
     //  Call the alarm check function to determine what breathing range
-    alarmCode = core::AlarmCheck( core::stdLF, core::stdBF, core::stdHF );
+    alarmCode = core::AlarmCheck(core::stdLF, core::stdBF, core::stdHF);
 
-    if (alarmCode > 0) core::isToneEn = true;
-    else core::isToneEn = false;
+    if (alarmCode > 0)
+        core::isToneEn = true;
+    else
+        core::isToneEn = false;
 
     //  Call the alarm function to turn on or off the tone
-    core::setAlarm( alarmCode, core::isToneEn );
+    core::setAlarm(alarmCode, core::isToneEn);
 
     // To print data to the serial port, use the WriteToSerial function.
     //
@@ -131,8 +134,8 @@ void loop() {
     // core::printArray[2] = noiseOutput;
     core::printArray[1] = core::xv;
 
-    core::printArray[2] = core::yLF;       //  Column 3
-    core::printArray[3] = core::yBF;       //  Column 4, etc...
+    core::printArray[2] = core::yLF;  //  Column 3
+    core::printArray[3] = core::yBF;  //  Column 4, etc...
     core::printArray[4] = core::yHF;
     core::printArray[5] = core::stdLF;
     core::printArray[6] = core::stdBF;
