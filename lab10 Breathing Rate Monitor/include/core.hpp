@@ -3,7 +3,7 @@
 namespace core {
 
 const int TSAMP_MSEC = 100;
-const int NUM_SAMPLES = 900;  // 3600;
+const int NUM_SAMPLES = 3600;
 const int NUM_SUBSAMPLES = 160;
 const int DAC0 = 3, DAC1 = 4, DAC2 = 5, LM61 = A0, VDITH = A1;
 const int V_REF = 5.0;
@@ -16,7 +16,7 @@ const float INV_FXPT = 1.0 / DATA_FXPT;  // division slow: precalculate
 
 int nSmpl = 1, sample;
 
-float xv, yv, yLF, yMF, yHF, stdLF, stdMF, stdHF;
+float xv, yv, yLF, yBF, yHF, stdLF, stdBF, stdHF;
 float printArray[9];
 int numValues = 0;
 
@@ -33,17 +33,17 @@ struct stats_t {
 } statsLF, statsMF, statsHF;
 
 //******************************************************************
-int AlarmCheck(float stdLF, float stdMF, float stdHF) {
-    if (stdLF < 0.05 && stdMF < 0.05 && stdHF < 0.05)
-        return 0;
+int AlarmCheck(float stdLF, float stdBF, float stdHF) {
+    if (stdLF < 0.001 && stdBF < 0.001 && stdHF < 0.001)
+        return 1; // Disconnect
 
-    if (stdHF > 0.30 && stdHF > stdMF && stdHF > stdLF)
-        return 3;
+    if (stdLF > stdBF && stdLF > stdHF)
+        return 2; // LPF
 
-    if (stdLF > 0.30 && stdLF > stdMF && stdLF > stdHF)
-        return 1;
+    if (stdHF > stdBF && stdHF > stdLF)
+        return 3; // HPF
 
-    return 2;
+    return 0; // Normal (BPF)
 }  // end AlarmCheck
 
 //*******************************************************************
@@ -87,20 +87,15 @@ void setAlarm(int aCode, boolean isToneEn) {
 
     switch (aCode)
     {
-        case 0:
+        case 1: // Disconnected
             tone(SPKR, 200);
             break;
 
-        case 1:
+        case 2: // LPF
             tone(SPKR, 400);
             break;
 
-        case 2:
-            noTone(SPKR);
-            highOn = false;
-            break;
-
-        case 3:
+        case 3: // HPF
         {
             unsigned long now = millis();
             if (now - lastToggle >= 1000)
@@ -113,10 +108,11 @@ void setAlarm(int aCode, boolean isToneEn) {
             break;
         }
 
-        default:
+        default: // Normal
             noTone(SPKR);
+            highOn = false;
             break;
-
+    }
 }  // setBreathRateAlarm()
 
 //*************************************************************
