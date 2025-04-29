@@ -62,14 +62,14 @@ p = inputParser;
 % a MAC then the COM port is a string
 
 if ispc
-    defaultComPort = 3;
+    defaultComPort = 9;
     p.addParameter('ComPort', defaultComPort, @isnumeric);
 else
     defaultComPort = [];
     p.addParameter('ComPort',defaultComPort, @ischar);
 end
 
-defaultBaudRate = 9600;
+defaultBaudRate = 115200;
 defaultNumReadSamples = [];
 defaultReadyString = '%Arduino Ready';
 defaultPortTimeOut = 1;  %  1 second port time out

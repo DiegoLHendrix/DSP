@@ -1,0 +1,63 @@
+\documentclass[journal]{IEEEtran}
+\usepackage{amsmath, amsfonts, graphicx, listings, xcolor, float, caption}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\graphicspath{ {./images/} }
+
+\title{Breathing Rate Monitor}
+\author{
+    \IEEEauthorblockN{Argenis Aquino, Rachel DuBois, Diego Lopez, Jonathan Sumner \\}
+    \IEEEauthorblockA{
+        Department of Engineering Technology, Rochester Institute of Technology\\
+        1 Lomb Memorial Drive, Rochester NY, 14623, United States of America \\}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+In this project for EEET-425 Digital Signal Processing, our team was tasked with developing a breathing rate detection system aimed at identifying potential cases of acute respiratory infection (pneumonia) in children aged 11 months to 5 years. The system continuously monitors a child's breathing rate and detects abnormal conditions, specifically when the rate exceeds 40 breaths per minute or falls below 12 breaths per minute. Upon detecting either condition, the system must issue an alert within two minutes, ensuring timely intervention. Additionally, the system is designed to recognize possible sensor disconnections or other abnormal operational states. This project integrates principles of digital signal processing to create a reliable, responsive tool for early health monitoring in pediatric care.
+\end{abstract}
+
+\section{Introduction}
+\IEEEPARstart{D}{igital} signal processing (DSP) techniques are widely used in modern health monitoring systems to extract meaningful information from physiological signals. In this project, we apply DSP methods to develop a breathing rate monitor targeted for early detection of acute respiratory infections, such as pneumonia, in young children aged 11 months to 5 years.
+
+Pneumonia remains one of the leading causes of mortality in young children worldwide, and early detection is crucial for effective treatment. Clinical guidelines often identify abnormal breathing rates as an early sign of infection, with rates exceeding 40 breaths per minute or falling below 12 breaths per minute signaling potential problems. To address this need, our team designed a system capable of monitoring breathing rate in real-time, detecting abnormalities, and issuing an alert within two minutes of onset.
+
+The project focuses on leveraging signal acquisition, filtering, peak detection, and rate calculation techniques to deliver accurate and timely results. Additionally, the system is designed to handle error conditions such as sensor disconnection or unexpected signal loss. By implementing this project, we demonstrate how digital signal processing can play a vital role in improving pediatric healthcare and early illness intervention.
+
+\section{Results}
+Results
+
+% Plot
+
+\section{Analysis}
+
+\section{Conclusion}
+
+\end{document}

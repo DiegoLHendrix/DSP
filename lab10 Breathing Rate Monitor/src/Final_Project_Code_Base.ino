@@ -91,7 +91,7 @@ void loop() {
     xv = float(eqOutput);
 
     // Uncomment this when measuring execution times
-    startUsec = micros();
+    // startUsec = micros();
 
     // Filter bank
     yLF = IIR_LPF(xv);  // second order systems cascade
@@ -148,6 +148,12 @@ void loop() {
         Serial.println(float(execUsec) / NUM_SAMPLES);
         while (true) {};  // spin forever
     }
+
+    /* MATLAB command:
+    * 
+    * CaptureArduinoData('ComPort', 9, 'BaudRate', 115200, 'NumActivePlots', 9, 'GraphDelay', 100, 'DataFile', 'SweptTone.mat')
+    * CaptureArduinoData('ComPort', 9, 'BaudRate', 115200, 'NumActivePlots', 9, 'GraphDelay', 100)
+    */
 }  // loop()
 
 //**********************************************************************

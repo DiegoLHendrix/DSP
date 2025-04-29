@@ -175,9 +175,9 @@ void configureArduino(void) {
     pinMode(SPKR, OUTPUT);
     digitalWrite(SPKR, LOW);
 
-    analogReference(INTERNAL);  // DEFAULT, INTERNAL
-    analogRead(LM61);           // read and discard to prime ADC registers
-    Serial.begin(115200);       // 11 char/msec
+    analogReference(DEFAULT);  // DEFAULT, INTERNAL
+    analogRead(LM61);          // read and discard to prime ADC registers
+    Serial.begin(115200);      // 11 char/msec
 }
 
 //**********************************************************************

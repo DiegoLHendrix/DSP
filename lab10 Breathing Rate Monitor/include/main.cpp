@@ -24,8 +24,7 @@ void setup() {
 
     // Handshake with MATLAB
     Serial.println(F("%Arduino Ready"));
-    while (Serial.read() != 'g')
-        ;  // spin
+    while (Serial.read() != 'g') {};  // spin
 
     MsTimer2::set(core::TSAMP_MSEC, core::ISR_Sample);  // Set sample msec, ISR name
     MsTimer2::start();                                  // start running the Timer
@@ -34,7 +33,7 @@ void setup() {
 ////**********************************************************************
 void loop() {
     // core::setAlarm(1, true);
-    // syncSample();  // Wait for the interupt when actually reading ADC data
+    // core::syncSample();  // Wait for the interupt when actually reading ADC data
 
     // Breathing Rate Detection
 
