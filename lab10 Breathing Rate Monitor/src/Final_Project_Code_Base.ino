@@ -6,6 +6,7 @@
 
 #include <MsTimer2.h>
 #include <SPI.h>
+#include <Tone2.h>
 
 const int TSAMP_MSEC = 100;
 const int NUM_SAMPLES = 3600;
@@ -31,6 +32,9 @@ bool isToneEn = false;
 
 unsigned long startUsec, endUsec, execUsec;
 
+Tone toneT2;
+Tone toneT1;
+
 //  Define a structure to hold statistics values for each filter band
 struct stats_t {
     int tick = 1;
@@ -47,13 +51,16 @@ void setup() {
     Serial.println(F("%Arduino Ready"));
     while (Serial.read() != 'g') {};  // spin
 
+    toneT2.begin(13);
+    toneT1.begin(SPKR);
+
     MsTimer2::set(TSAMP_MSEC, ISR_Sample);  // Set sample msec, ISR name
     MsTimer2::start();                      // start running the Timer
 }
 
 //**********************************************************************
 void loop() {
-    // syncSample();  // Wait for the interupt when actually reading ADC data
+    syncSample();  // Wait for the interupt when actually reading ADC data
     // Breathing Rate Detection
     // Declare variables
     float readValue, floatOutput;  //  Input data from ADC after dither averaging or from MATLAB
@@ -88,7 +95,7 @@ void loop() {
     eqOutput = NoiseFilter(eqOutput, loopTick);
 
     //  Convert the output of the equalizer by scaling floating point
-    xv = float(eqOutput);
+    xv = float(eqOutput * INV_FXPT);
 
     // Uncomment this when measuring execution times
     // startUsec = micros();
@@ -158,14 +165,36 @@ void loop() {
 
 //**********************************************************************
 int AlarmCheck(float stdLF, float stdBF, float stdHF) {
-    // if (stdLF > 400.0 && stdBF  400.0 && stdHF < 400.0) return 1; // Disconnect
-    if (stdLF > 60.0 || stdBF > 140.0 || stdHF > 200.0) {
-        if (stdLF > stdBF && stdLF > stdHF)
-            return 2;
-        if (stdHF > stdBF && stdHF > stdLF)
-            return 3;
-        return 0;
+    int aCode = 0;
+    float noiseThreshold = -0.001;
+
+    if (stdLF > noiseThreshold || stdBF > noiseThreshold || stdHF > noiseThreshold) {
+        isToneEn = true;
+        if ((stdLF > stdBF) && (stdLF > stdHF)) {
+            //low breathing rate
+            aCode = 1;
+        }
+
+        else if ((stdBF > stdLF) && (stdBF > stdHF)) {
+            //normal breathing rate
+            aCode = 0;
+        }
+
+        else if ((stdHF > stdBF) && (stdHF > stdLF)) {
+            // High breathing state
+            aCode = 2;
+        }
+
+        else {
+            //indeterminant state
+            aCode = 3;
+        }
+
+    } else {
+        //non operational state
+        aCode = 4;
     }
+    return aCode;
 }  // end AlarmCheck
 
 //**********************************************************************
@@ -423,7 +452,7 @@ float analogReadDitherAve(void) {
 //**********************************************************************
 void setAlarm(int aCode, boolean isToneEn) {
     if (!isToneEn) {
-        noTone(SPKR);
+        toneT1.stop();
         return;
     }
 
@@ -432,11 +461,11 @@ void setAlarm(int aCode, boolean isToneEn) {
 
     switch (aCode) {
     case 1:  // Disconnected
-        tone(SPKR, 200);
+        toneT1.play(200);
         break;
 
     case 2:  // LPF
-        tone(SPKR, 400);
+        toneT1.play(400);
         break;
 
     case 3:  // HPF
@@ -446,15 +475,15 @@ void setAlarm(int aCode, boolean isToneEn) {
             lastToggle = now;
             highOn = !highOn;
             if (highOn)
-                tone(SPKR, 1000);
+                toneT1.play(1000);
             else
-                noTone(SPKR);
+                toneT1.stop();
         }
         break;
     }
 
     default:  // Normal
-        noTone(SPKR);
+        toneT1.stop();
         highOn = false;
         break;
     }
